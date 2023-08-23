@@ -40,24 +40,38 @@ def data_split(X,y,nan_mask,indices):
     return x_d, y_d
 
 
-def data_prep_openml(ds_id, seed, task, datasplit=[.65, .15, .2]):
+def data_prep_openml(path,seed, task, target_attribute, datasplit=[.65, .15, .2]):
     
     np.random.seed(seed) 
-    dataset = openml.datasets.get_dataset(ds_id)
-    
-    X, y, categorical_indicator, attribute_names = dataset.get_data(dataset_format="dataframe", target=dataset.default_target_attribute)
-    if ds_id == 42178:
-        categorical_indicator = [True, False, True,True,False,True,True,True,True,True,True,True,True,True,True,True,True,False, False]
-        tmp = [x if (x != ' ') else '0' for x in X['TotalCharges'].tolist()]
-        X['TotalCharges'] = [float(i) for i in tmp ]
-        y = y[X.TotalCharges != 0]
-        X = X[X.TotalCharges != 0]
-        X.reset_index(drop=True, inplace=True)
-        print(y.shape, X.shape)
-    if ds_id in [42728,42705,42729,42571]:
-        # import ipdb; ipdb.set_trace()
-        X, y = X[:50000], y[:50000]
-        X.reset_index(drop=True, inplace=True)
+    # dataset = openml.datasets.get_dataset(ds_id)
+    df=pd.read_csv(path)
+    y_column=target_attribute
+    x_columns=list(set(df.columns)-set([y_column]))
+    X=df[x_columns]
+    y=df[[y_column]].squeeze()
+    attribute_names=x_columns
+
+    categorical_cols=X.select_dtypes(exclude=['int64','float64']).columns.to_list()
+    categorical_indicator=[False]*len(X.columns)
+    cat_col_indices=list(map(lambda x:X.columns.get_loc(x),categorical_cols)).sort()
+
+    if cat_col_indices is not None:
+      for i in range(0,len(cat_col_indices)):
+        categorical_indicator[cat_col_indices[i]]=True
+
+    # X, y, categorical_indicator, attribute_names = dataset.get_data(dataset_format="dataframe", target=dataset.default_target_attribute)
+    # if ds_id == 42178:
+    #     categorical_indicator = [True, False, True,True,False,True,True,True,True,True,True,True,True,True,True,True,True,False, False]
+    #     tmp = [x if (x != ' ') else '0' for x in X['TotalCharges'].tolist()]
+    #     X['TotalCharges'] = [float(i) for i in tmp ]
+    #     y = y[X.TotalCharges != 0]
+    #     X = X[X.TotalCharges != 0]
+    #     X.reset_index(drop=True, inplace=True)
+    #     print(y.shape, X.shape)
+    # if ds_id in [42728,42705,42729,42571]:
+    #     # import ipdb; ipdb.set_trace()
+    #     X, y = X[:50000], y[:50000]
+    #     X.reset_index(drop=True, inplace=True)
     categorical_columns = X.columns[list(np.where(np.array(categorical_indicator)==True)[0])].tolist()
     cont_columns = list(set(X.columns.tolist()) - set(categorical_columns))
 

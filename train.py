@@ -14,7 +14,8 @@ import os
 import numpy as np
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--dset_id', required=True, type=int)
+parser.add_argument('--path', required=True, type=str)
+parser.add_argument('--target_column', required=True, type=str)
 parser.add_argument('--vision_dset', action = 'store_true')
 parser.add_argument('--task', required=True, type=str,choices = ['binary','multiclass','regression'])
 parser.add_argument('--cont_embeddings', default='MLP', type=str,choices = ['MLP','Noemb','pos_singleMLP'])
@@ -59,7 +60,7 @@ parser.add_argument('--final_mlp_style', default='sep', type=str,choices = ['com
 
 
 opt = parser.parse_args()
-modelsave_path = os.path.join(os.getcwd(),opt.savemodelroot,opt.task,str(opt.dset_id),opt.run_name)
+modelsave_path = os.path.join(os.getcwd(),opt.savemodelroot,opt.task,opt.run_name)
 if opt.task == 'regression':
     opt.dtask = 'reg'
 else:
@@ -85,7 +86,7 @@ if opt.active_log:
 
 
 print('Downloading and processing the dataset, it might take some time.')
-cat_dims, cat_idxs, con_idxs, X_train, y_train, X_valid, y_valid, X_test, y_test, train_mean, train_std = data_prep_openml(opt.dset_id, opt.dset_seed,opt.task, datasplit=[.65, .15, .2])
+cat_dims, cat_idxs, con_idxs, X_train, y_train, X_valid, y_valid, X_test, y_test, train_mean, train_std = data_prep_openml(opt.path, opt.dset_seed,opt.task,opt.target_column, datasplit=[.65, .15, .2])
 continuous_mean_std = np.array([train_mean,train_std]).astype(np.float32) 
 
 ##### Setting some hyperparams based on inputs and dataset
